@@ -60,7 +60,14 @@ def encode_captions(model: CRCL, loader):
     rows = [None] * len(loader.dataset)
     lengths = [0] * len(loader.dataset)
     for images, _, captions, caption_lengths, ids in loader:
-        _, cap_embs, cap_lens = model.forward_emb(images, None, captions, caption_lengths)
+        forward_result = model.forward_emb(images, None, captions, caption_lengths)
+        if len(forward_result) == 3:
+            _, cap_embs, cap_lens = forward_result
+        elif len(forward_result) == 2:
+            _, cap_embs = forward_result
+            cap_lens = caption_lengths
+        else:
+            raise ValueError(f"unexpected forward_emb output size: {len(forward_result)}")
         cap_embs = cap_embs.detach().cpu().numpy()
         for row, index in enumerate(ids):
             rows[index] = cap_embs[row, : int(cap_lens[row])]

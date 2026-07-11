@@ -1,0 +1,26 @@
+{
+  "git_commit": "664cc45b98d0e9f607e39c9cdae6e10d668271e2",
+  "git_dirty": true,
+  "inputs": {
+    "/mnt/zhitai2T/ktj/RoMa-data/data/scanrefer_train.jsonl": {
+      "sha256": "95dc8bafb27c0e9b0c1d7a16eb1fb12c7a4b7e425b96978b6f222dea51c8c978",
+      "hash_mode": "full",
+      "bytes": 954147
+    },
+    "/mnt/zhitai2T/ktj/RoMa-data/data/pt2vec_200_random_train.npy": {
+      "sha256": "a7f261094bb3c7121f043666014b2f6b97f930cce3ece02df627617c2c23e9d3",
+      "hash_mode": "sampled",
+      "bytes": 920780928
+    },
+    "/mnt/zhitai2T/ktj/RoMa-data/data/scanrefer_val.jsonl": {
+      "sha256": "4e3378a44ce3f411c5abddeffef27db8d72b08e90fd4fdbb6b3f78267659d1ce",
+      "hash_mode": "full",
+      "bytes": 243493
+    },
+    "/mnt/zhitai2T/ktj/RoMa-data/data/pt2vec_200_random_val.npy": {
+      "sha256": "f06392bfdf30a0311140dc0fab799a4ef64d7939d996579d8db72a2aea0f3ce6",
+      "hash_mode": "sampled",
+      "bytes": 231014528
+    }
+  }
+}
