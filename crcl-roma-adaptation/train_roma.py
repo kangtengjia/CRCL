@@ -169,7 +169,16 @@ def main() -> None:
             torch.save(checkpoint, Path(opt.checkpoint_dir) / "checkpoint.pth.tar")
             if score >= best_score:
                 torch.save(checkpoint, Path(opt.checkpoint_dir) / "model_best.pth.tar")
-            logger.info("stage=%s epoch=%s global=%s Rsum=%.2f best=%.2f", stage_index, local_epoch, global_epoch, score, best_score)
+            logger.info(
+                "stage=%s epoch=%s global=%s R@1=%.2f MRR=%.2f Rsum=%.2f best=%.2f",
+                stage_index,
+                local_epoch,
+                global_epoch,
+                metrics["R@1"],
+                metrics["MRR"],
+                score,
+                best_score,
+            )
             global_epoch += 1
         move_gt = model.move_gt
         resume = None

@@ -17,3 +17,4 @@ def test_text_to_scene_metrics_supports_variable_captions_per_scene():
     assert metrics["R@2"] == 100.0
     assert metrics["Rsum"] == 275.0
     assert metrics["MedR"] == 1.0
+    assert metrics["MRR"] == 87.5
