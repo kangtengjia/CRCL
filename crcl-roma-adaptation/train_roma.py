@@ -89,7 +89,7 @@ def validate(opt, loader, model: CRCL) -> dict:
     return text_to_scene_metrics(similarities.T, loader.dataset.scene_indices, ks=DEFAULT_KS)
 
 
-def train_epoch(opt, loader, model: CRCL, local_epoch: int, stage_index: int, global_epoch: int) -> None:
+def train_epoch(opt, loader, model: CRCL, local_epoch: int, stage_index: int, global_epoch: int) -> LogCollector:
     if hasattr(loader.batch_sampler, "set_epoch"):
         loader.batch_sampler.set_epoch(global_epoch)
     collector = LogCollector()
@@ -100,6 +100,7 @@ def train_epoch(opt, loader, model: CRCL, local_epoch: int, stage_index: int, gl
         model.train_start()
         model.logger = collector
         model.train_self(images, image_lengths, captions, caption_lengths, text_ids, epoch=local_epoch, schedule=stage_index)
+    return collector
 
 
 def main() -> None:
@@ -153,7 +154,19 @@ def main() -> None:
             lr = opt.learning_rate * (0.1 ** (local_epoch // opt.lr_update))
             for group in model.optimizer.param_groups:
                 group["lr"] = lr
-            train_epoch(opt, train_loader, model, local_epoch, stage_index, global_epoch)
+            collector = train_epoch(opt, train_loader, model, local_epoch, stage_index, global_epoch)
+            loss_meter = collector.meters.get("loss")
+            mean_loss = float(loss_meter.avg) if loss_meter is not None else float("nan")
+            group_lrs = [float(group["lr"]) for group in model.optimizer.param_groups]
+            logger.info(
+                "TRAIN_HEALTH stage=%s epoch=%s global=%s loss=%s lr=%s group_lrs=%s",
+                stage_index,
+                local_epoch,
+                global_epoch,
+                mean_loss,
+                group_lrs[0] if group_lrs else None,
+                group_lrs,
+            )
             metrics = validate(opt, val_loader, model)
             score = metrics["Rsum"]
             if score > best_score:

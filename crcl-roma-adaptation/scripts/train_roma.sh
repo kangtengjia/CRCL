@@ -28,6 +28,11 @@ EOF
 EXTRA=()
 if [[ "${TEXT_ENCODER}" == "bert" ]]; then
   EXTRA+=(--bert_path "${BERT_PATH}")
+  EFFECTIVE_LR="${LEARNING_RATE:-${BERT_LEARNING_RATE:-1e-4}}"
+  EFFECTIVE_LR_UPDATE="${LR_UPDATE_OVERRIDE:-${BERT_LR_UPDATE:-5}}"
+else
+  EFFECTIVE_LR="${LEARNING_RATE:-$LR}"
+  EFFECTIVE_LR_UPDATE="${LR_UPDATE_OVERRIDE:-$LR_UPDATE}"
 fi
 if [[ "${AUTO_RESUME:-0}" == "1" && -s "${RUN_ROOT}/checkpoint_dir/checkpoint.pth.tar" ]]; then
   EXTRA+=(--resume "${RUN_ROOT}/checkpoint_dir/checkpoint.pth.tar")
@@ -38,8 +43,8 @@ TRAIN_COMMAND=(
   --data_name "${DATASET}" --data_root "${DATA_ROOT}" --data_path "${DATA_ROOT}"
   --vocab_path "${VOCAB_PATH}" --text_enc_type "${TEXT_ENCODER}"
   --folder_name "${RUN_FOLDER}" --module_name SGR --noise_ratio 0
-  --num_epochs "${NUM_EPOCHS:-$EPOCHS}" --learning_rate "${LEARNING_RATE:-$LR}"
-  --lr_update "${LR_UPDATE_OVERRIDE:-$LR_UPDATE}" --batch_size "${BATCH_SIZE:-$BATCH}"
+  --num_epochs "${NUM_EPOCHS:-$EPOCHS}" --learning_rate "${EFFECTIVE_LR}"
+  --lr_update "${EFFECTIVE_LR_UPDATE}" --batch_size "${BATCH_SIZE:-$BATCH}"
   --workers "${WORKERS:-8}" --img_dim 1024 --embed_size 1024 --num_regions 200 --gpu "${GPU_ID}"
   "${EXTRA[@]}" "${@:3}"
 )
