@@ -89,17 +89,30 @@ def validate(opt, loader, model: CRCL) -> dict:
     return text_to_scene_metrics(similarities.T, loader.dataset.scene_indices, ks=DEFAULT_KS)
 
 
-def train_epoch(opt, loader, model: CRCL, local_epoch: int, stage_index: int, global_epoch: int) -> LogCollector:
+def train_epoch(opt, loader, model: CRCL, local_epoch: int, stage_index: int, global_epoch: int, logger) -> LogCollector:
     if hasattr(loader.batch_sampler, "set_epoch"):
         loader.batch_sampler.set_epoch(global_epoch)
     collector = LogCollector()
-    for images, image_lengths, captions, caption_lengths, text_ids in loader:
+    for batch_index, (images, image_lengths, captions, caption_lengths, text_ids) in enumerate(loader):
         scene_indices = [loader.dataset.scene_indices[index] for index in text_ids]
         if len(scene_indices) != len(set(scene_indices)):
             raise RuntimeError("RoMa sampler emitted duplicate scenes in one CRCL batch")
         model.train_start()
         model.logger = collector
         model.train_self(images, image_lengths, captions, caption_lengths, text_ids, epoch=local_epoch, schedule=stage_index)
+        if batch_index % opt.log_step == 0:
+            loss_meter = collector.meters.get("loss")
+            mean_loss = float(loss_meter.avg) if loss_meter is not None else float("nan")
+            learning_rate = float(model.optimizer.param_groups[0]["lr"])
+            logger.info(
+                "TRAIN_HEALTH stage=%s epoch=%s global=%s batch=%s loss=%s lr=%s",
+                stage_index,
+                local_epoch,
+                global_epoch,
+                batch_index,
+                mean_loss,
+                learning_rate,
+            )
     return collector
 
 
@@ -154,7 +167,7 @@ def main() -> None:
             lr = opt.learning_rate * (0.1 ** (local_epoch // opt.lr_update))
             for group in model.optimizer.param_groups:
                 group["lr"] = lr
-            collector = train_epoch(opt, train_loader, model, local_epoch, stage_index, global_epoch)
+            collector = train_epoch(opt, train_loader, model, local_epoch, stage_index, global_epoch, logger)
             loss_meter = collector.meters.get("loss")
             mean_loss = float(loss_meter.avg) if loss_meter is not None else float("nan")
             group_lrs = [float(group["lr"]) for group in model.optimizer.param_groups]
