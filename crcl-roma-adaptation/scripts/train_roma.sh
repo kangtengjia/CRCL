@@ -10,6 +10,9 @@ VOCAB_PATH="${VOCAB_PATH:-/home/ktj/Projects/Cross-Modality-Learning/RoMa/vocab}
 BERT_PATH="${BERT_PATH:-/home/ktj/Projects/RoMa/pretrained/bert-base-uncased}"
 RUN_FOLDER="${RUN_FOLDER:-roma/${DATASET}/${TEXT_ENCODER}}"
 RUN_ROOT="runs/${RUN_FOLDER}"
+EARLY_STOP_PATIENCE="${EARLY_STOP_PATIENCE:-10}"
+EARLY_STOP_LOG="${EARLY_STOP_LOG:-${RUN_ROOT}/early_stop_monitor.log}"
+EARLY_STOP_STATE="${EARLY_STOP_STATE:-${RUN_ROOT}/early_stop.json}"
 
 cd "$(dirname "$0")/.."
 read -r EPOCHS LR_UPDATE LR BATCH <<EOF
@@ -30,11 +33,24 @@ if [[ "${AUTO_RESUME:-0}" == "1" && -s "${RUN_ROOT}/checkpoint_dir/checkpoint.pt
   EXTRA+=(--resume "${RUN_ROOT}/checkpoint_dir/checkpoint.pth.tar")
 fi
 
-CUDA_VISIBLE_DEVICES="${GPU_ID}" "${PYTHON_BIN}" train_roma.py \
-  --data_name "${DATASET}" --data_root "${DATA_ROOT}" --data_path "${DATA_ROOT}" \
-  --vocab_path "${VOCAB_PATH}" --text_enc_type "${TEXT_ENCODER}" \
-  --folder_name "${RUN_FOLDER}" --module_name SGR --noise_ratio 0 \
-  --num_epochs "${NUM_EPOCHS:-$EPOCHS}" --learning_rate "${LEARNING_RATE:-$LR}" \
-  --lr_update "${LR_UPDATE_OVERRIDE:-$LR_UPDATE}" --batch_size "${BATCH_SIZE:-$BATCH}" \
-  --workers "${WORKERS:-8}" --img_dim 1024 --embed_size 1024 --num_regions 200 --gpu "${GPU_ID}" \
+TRAIN_COMMAND=(
+  "${PYTHON_BIN}" train_roma.py
+  --data_name "${DATASET}" --data_root "${DATA_ROOT}" --data_path "${DATA_ROOT}"
+  --vocab_path "${VOCAB_PATH}" --text_enc_type "${TEXT_ENCODER}"
+  --folder_name "${RUN_FOLDER}" --module_name SGR --noise_ratio 0
+  --num_epochs "${NUM_EPOCHS:-$EPOCHS}" --learning_rate "${LEARNING_RATE:-$LR}"
+  --lr_update "${LR_UPDATE_OVERRIDE:-$LR_UPDATE}" --batch_size "${BATCH_SIZE:-$BATCH}"
+  --workers "${WORKERS:-8}" --img_dim 1024 --embed_size 1024 --num_regions 200 --gpu "${GPU_ID}"
   "${EXTRA[@]}" "${@:3}"
+)
+
+if [[ "${EARLY_STOP_PATIENCE}" =~ ^[0-9]+$ ]] && [[ "${EARLY_STOP_PATIENCE}" -gt 0 ]]; then
+  mkdir -p "$(dirname "${EARLY_STOP_LOG}")" "$(dirname "${EARLY_STOP_STATE}")"
+  "${PYTHON_BIN}" "${PWD}/../../../tools/train_with_early_stop.py" \
+    --patience "${EARLY_STOP_PATIENCE}" \
+    --log "${EARLY_STOP_LOG}" \
+    --state-json "${EARLY_STOP_STATE}" \
+    -- "${TRAIN_COMMAND[@]}"
+else
+  CUDA_VISIBLE_DEVICES="${GPU_ID}" "${TRAIN_COMMAND[@]}"
+fi

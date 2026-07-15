@@ -155,11 +155,20 @@ def load_roma_bundle(data_root: str | Path, data_name: str, data_split: str) -> 
 
 
 class SceneUniqueBatchSampler(Sampler[List[int]]):
-    def __init__(self, scene_indices: Sequence[int], batch_size: int, *, shuffle: bool = True, seed: int = 2022) -> None:
+    def __init__(
+        self,
+        scene_indices: Sequence[int],
+        batch_size: int,
+        *,
+        shuffle: bool = True,
+        seed: int = 2022,
+        drop_last: bool = False,
+    ) -> None:
         self.scene_indices = list(scene_indices)
         self.batch_size = int(batch_size)
         self.shuffle = bool(shuffle)
         self.seed = int(seed)
+        self.drop_last = bool(drop_last)
         self.epoch = 0
         if self.batch_size <= 0 or self.batch_size > len(set(self.scene_indices)):
             raise ValueError(f"batch_size must not exceed {len(set(self.scene_indices))} unique scenes")
@@ -183,8 +192,12 @@ class SceneUniqueBatchSampler(Sampler[List[int]]):
             if self.shuffle:
                 rng.shuffle(active)
             batch_scenes = active[:self.batch_size]
+            if self.drop_last and len(batch_scenes) < self.batch_size:
+                break
             yield [grouped[scene].popleft() for scene in batch_scenes]
             active = [scene for scene in active if grouped[scene]]
 
     def __len__(self) -> int:
+        if self.drop_last:
+            return len(self.scene_indices) // self.batch_size
         return len(self.scene_indices)

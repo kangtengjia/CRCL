@@ -261,7 +261,13 @@ def get_precomp_loader(data_path, data_split, vocab, opt, batch_size=100,
         if data_split == "train":
             return torch.utils.data.DataLoader(
                 dataset=dset,
-                batch_sampler=SceneUniqueBatchSampler(dset.scene_indices, batch_size, shuffle=shuffle, seed=getattr(opt, "seed", 2022)),
+                batch_sampler=SceneUniqueBatchSampler(
+                    dset.scene_indices,
+                    batch_size,
+                    shuffle=shuffle,
+                    seed=getattr(opt, "seed", 2022),
+                    drop_last=True,
+                ),
                 pin_memory=False,
                 num_workers=num_workers,
                 collate_fn=collate_fn,

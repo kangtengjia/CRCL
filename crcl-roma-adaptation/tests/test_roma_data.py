@@ -60,3 +60,12 @@ def test_scene_unique_batch_sampler_keeps_every_caption_and_rejects_large_batch(
     assert all(len({sampler.scene_indices[index] for index in batch}) == len(batch) for batch in batches)
     with pytest.raises(ValueError, match="unique scenes"):
         SceneUniqueBatchSampler([0, 0, 1], batch_size=3)
+
+
+def test_scene_unique_batch_sampler_can_drop_incomplete_training_tail():
+    sampler = SceneUniqueBatchSampler([0, 0, 1, 2, 2], batch_size=3, shuffle=False, drop_last=True)
+
+    batches = list(sampler)
+
+    assert batches == [[0, 2, 3]]
+    assert len(sampler) == 1
