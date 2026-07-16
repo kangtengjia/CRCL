@@ -11,6 +11,9 @@ __pycache__/
 /wandb/
 events.out.tfevents.*
 
+/crcl-roma-adaptation/runs/
+/crcl-roma-adaptation/outputs/
+
 *.pt
 *.pth
 *.pth.tar
