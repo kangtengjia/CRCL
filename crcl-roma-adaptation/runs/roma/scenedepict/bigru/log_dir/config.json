@@ -9,7 +9,7 @@
   "weights_only": false,
   "folder_name": "roma/scenedepict/bigru",
   "batch_size": 8,
-  "num_epochs": 24,
+  "num_epochs": 1000,
   "schedules": [
     6,
     6,
@@ -41,7 +41,7 @@
   "lambda_lse": 6.0,
   "lambda_softmax": 4.0,
   "module_name": "SGR",
-  "resume": "",
+  "resume": "runs/roma/scenedepict/bigru/checkpoint_dir/checkpoint.pth.tar",
   "confident": true,
   "mc": true,
   "warm_epoch": 2,

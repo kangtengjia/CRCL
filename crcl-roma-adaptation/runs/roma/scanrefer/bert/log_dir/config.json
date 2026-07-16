@@ -49,7 +49,7 @@
   "noise_file": "",
   "tau": 0.05,
   "alpha": 0.8,
-  "gpu": "1",
+  "gpu": "0",
   "log_dir": "/home/ktj/Projects/Cross-Modality-Learning/Comparison/CRCL/crcl-roma-adaptation/runs/roma/scanrefer/bert/log_dir",
   "checkpoint_dir": "/home/ktj/Projects/Cross-Modality-Learning/Comparison/CRCL/crcl-roma-adaptation/runs/roma/scanrefer/bert/checkpoint_dir"
 }

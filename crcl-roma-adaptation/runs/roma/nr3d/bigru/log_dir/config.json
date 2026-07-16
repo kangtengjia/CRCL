@@ -41,7 +41,7 @@
   "lambda_lse": 6.0,
   "lambda_softmax": 4.0,
   "module_name": "SGR",
-  "resume": "",
+  "resume": "runs/roma/nr3d/bigru/checkpoint_dir/checkpoint.pth.tar",
   "confident": true,
   "mc": true,
   "warm_epoch": 2,
