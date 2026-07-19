@@ -22,8 +22,28 @@ class CRCL(object):
             self.base_model = SGRAF(opt)
 
         self.params = list(self.base_model.params) 
-
-        self.optimizer = torch.optim.AdamW(self.params, lr=opt.learning_rate)
+        if getattr(opt, 'text_enc_type', 'bigru') == 'bert':
+            bert_named_params = list(self.base_model.txt_enc.bert.named_parameters())
+            no_decay = ('bias', 'LayerNorm.weight')
+            bert_decay = [parameter for name, parameter in bert_named_params
+                          if not any(term in name for term in no_decay)]
+            bert_no_decay = [parameter for name, parameter in bert_named_params
+                             if any(term in name for term in no_decay)]
+            bert_param_ids = {id(parameter) for _, parameter in bert_named_params}
+            task_params = [parameter for parameter in self.params if id(parameter) not in bert_param_ids]
+            self.optimizer = torch.optim.AdamW([
+                {'params': bert_decay, 'lr': opt.bert_learning_rate,
+                 'initial_lr': opt.bert_learning_rate, 'weight_decay': opt.bert_weight_decay,
+                 'group_name': 'bert_decay'},
+                {'params': bert_no_decay, 'lr': opt.bert_learning_rate,
+                 'initial_lr': opt.bert_learning_rate, 'weight_decay': 0.0,
+                 'group_name': 'bert_no_decay'},
+                {'params': task_params, 'lr': opt.learning_rate,
+                 'initial_lr': opt.learning_rate, 'weight_decay': 0.0,
+                 'group_name': 'task'},
+            ])
+        else:
+            self.optimizer = torch.optim.AdamW(self.params, lr=opt.learning_rate)
   
         self.move_gt = None 
         self.step = 0
@@ -118,5 +138,4 @@ class CRCL(object):
         self.optimizer.step()
 
     
-
 

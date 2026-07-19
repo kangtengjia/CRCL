@@ -27,10 +27,21 @@ EOF
 
 EXTRA=()
 if [[ "${TEXT_ENCODER}" == "bert" ]]; then
-  EXTRA+=(--bert_path "${BERT_PATH}")
+  EXTRA+=(--bert_path "${BERT_PATH}" --bert_learning_rate "${BERT_LEARNING_RATE:-3e-5}" \
+    --bert_warmup_steps "${BERT_WARMUP_STEPS:-0}")
 fi
-if [[ "${AUTO_RESUME:-0}" == "1" && -s "${RUN_ROOT}/checkpoint_dir/checkpoint.pth.tar" ]]; then
-  EXTRA+=(--resume "${RUN_ROOT}/checkpoint_dir/checkpoint.pth.tar")
+if [[ "${AUTO_RESUME:-0}" == "1" ]]; then
+  for checkpoint in "${RUN_ROOT}/checkpoint_dir/checkpoint.pth.tar" "${RUN_ROOT}/checkpoint_dir/model_best.pth.tar"; do
+    if [[ -s "${checkpoint}" ]] && "${PYTHON_BIN}" - "${checkpoint}" >/dev/null 2>&1 <<'PY'
+import sys
+import torch
+torch.load(sys.argv[1], map_location="cpu", weights_only=False)
+PY
+    then
+      EXTRA+=(--resume "${checkpoint}")
+      break
+    fi
+  done
 fi
 
 TRAIN_COMMAND=(

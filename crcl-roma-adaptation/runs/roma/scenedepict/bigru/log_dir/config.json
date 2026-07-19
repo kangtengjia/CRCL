@@ -1,8 +1,8 @@
 {
   "data_name": "scenedepict",
-  "data_path": "/home/ktj/Projects/Cross-Modality-Learning/RoMa/data",
+  "data_path": "/mnt/newdisk/ktj/RoMa-data/data",
   "vocab_path": "/home/ktj/Projects/Cross-Modality-Learning/RoMa/vocab",
-  "data_root": "/home/ktj/Projects/Cross-Modality-Learning/RoMa/data",
+  "data_root": "/mnt/newdisk/ktj/RoMa-data/data",
   "text_enc_type": "bigru",
   "bert_path": "",
   "seed": 2022,
@@ -18,7 +18,7 @@
   ],
   "lr_update": 20,
   "learning_rate": 0.0003,
-  "workers": 8,
+  "workers": 4,
   "log_step": 200,
   "val_step": 500,
   "grad_clip": 2.0,
@@ -41,7 +41,7 @@
   "lambda_lse": 6.0,
   "lambda_softmax": 4.0,
   "module_name": "SGR",
-  "resume": "runs/roma/scenedepict/bigru/checkpoint_dir/checkpoint.pth.tar",
+  "resume": "",
   "confident": true,
   "mc": true,
   "warm_epoch": 2,
@@ -49,7 +49,7 @@
   "noise_file": "",
   "tau": 0.05,
   "alpha": 0.8,
-  "gpu": "0",
+  "gpu": "1",
   "log_dir": "/home/ktj/Projects/Cross-Modality-Learning/Comparison/CRCL/crcl-roma-adaptation/runs/roma/scenedepict/bigru/log_dir",
   "checkpoint_dir": "/home/ktj/Projects/Cross-Modality-Learning/Comparison/CRCL/crcl-roma-adaptation/runs/roma/scenedepict/bigru/checkpoint_dir"
 }

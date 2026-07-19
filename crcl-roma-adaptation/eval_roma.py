@@ -15,11 +15,16 @@ from train_roma import load_vocab, validate
 
 
 def evaluate(model_path: str, data_root: str, output_json: str | None = None) -> dict:
-    checkpoint = torch.load(model_path, map_location="cpu")
+    checkpoint = torch.load(model_path, map_location="cpu", weights_only=False)
     opt = checkpoint["opt"]
     opt.data_root = data_root
     opt.data_path = data_root
     opt.workers = int(getattr(opt, "workers", 0))
+    # Legacy checkpoints may omit optimizer-only BERT metadata even though the
+    # model constructor creates optimizer groups during evaluation.
+    opt.bert_learning_rate = float(getattr(opt, "bert_learning_rate", 3e-5))
+    opt.bert_weight_decay = float(getattr(opt, "bert_weight_decay", 0.01))
+    opt.bert_warmup_steps = int(getattr(opt, "bert_warmup_steps", 0))
     if opt.text_enc_type == "bert":
         opt.bert_path = str(require_bert_path(opt.bert_path))
     vocab = load_vocab(opt)

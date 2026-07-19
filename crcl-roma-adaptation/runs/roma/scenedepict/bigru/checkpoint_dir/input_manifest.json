@@ -1,23 +1,23 @@
 {
-  "git_commit": "35ae3465809be91f40fcf5f0291af93d45b9760d",
+  "git_commit": "4c4538669f534f8782c8baa1fde2c5367834c6d7",
   "git_dirty": true,
   "inputs": {
-    "/mnt/zhitai2T/ktj/RoMa-data/data/3D_Text_Retrv_train_final_sorted.json": {
+    "/mnt/newdisk/ktj/RoMa-data/data/3D_Text_Retrv_train_final_sorted.json": {
       "sha256": "370eced0d9f1323d5ccd54ee700091b8f492ff67a8915ef1e291b0129328b875",
       "hash_mode": "full",
       "bytes": 3604191
     },
-    "/mnt/zhitai2T/ktj/RoMa-data/data/3D_Text_Retrv_grid_train.npy": {
+    "/mnt/newdisk/ktj/RoMa-data/data/3D_Text_Retrv_grid_train.npy": {
       "sha256": "aaa779261285d344f54eb540436b6712c1186d08bbff6c07fbafbd33f5e74233",
       "hash_mode": "sampled",
       "bytes": 924057728
     },
-    "/mnt/zhitai2T/ktj/RoMa-data/data/3D_Text_Retrv_val_final_sorted.json": {
+    "/mnt/newdisk/ktj/RoMa-data/data/3D_Text_Retrv_val_final_sorted.json": {
       "sha256": "fc78e6ec990ce0c6069d9d25d364f652591c626343fb47af2964fb4367606429",
       "hash_mode": "full",
       "bytes": 961474
     },
-    "/mnt/zhitai2T/ktj/RoMa-data/data/3D_Text_Retrv_grid_val.npy": {
+    "/mnt/newdisk/ktj/RoMa-data/data/3D_Text_Retrv_grid_val.npy": {
       "sha256": "d572a52f885788e0ce09db26221716818def77de4ff2ee296ee761402ff9674b",
       "hash_mode": "sampled",
       "bytes": 231014528

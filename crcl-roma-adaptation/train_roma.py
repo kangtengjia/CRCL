@@ -102,6 +102,23 @@ def train_epoch(opt, loader, model: CRCL, local_epoch: int, stage_index: int, gl
         model.train_self(images, image_lengths, captions, caption_lengths, text_ids, epoch=local_epoch, schedule=stage_index)
 
 
+def set_learning_rates(opt, model: CRCL, local_epoch: int) -> None:
+    """Keep BERT and task learning-rate groups distinct throughout CRCL stages."""
+    if opt.text_enc_type != "bert":
+        lr = opt.learning_rate * (0.1 ** (local_epoch // opt.lr_update))
+        for group in model.optimizer.param_groups:
+            group["lr"] = lr
+        return
+    decay = 0.1 ** (local_epoch // opt.lr_update)
+    step = min(model.step, max(0, opt.total_training_steps - 1))
+    for group in model.optimizer.param_groups:
+        base_lr = float(group["initial_lr"])
+        warmup = 1.0
+        if str(group.get("group_name", "")).startswith("bert"):
+            warmup = min(1.0, float(step + 1) / max(1, opt.bert_warmup_steps))
+        group["lr"] = base_lr * decay * warmup
+
+
 def main() -> None:
     opt = opts.parse_opt()
     opt.data_name = canonical_dataset_name(opt.data_name)
@@ -128,11 +145,14 @@ def main() -> None:
     if any(total <= opt.warm_epoch for total in totals):
         raise ValueError("each CRCL phase must exceed warm_epoch")
     manifest = build_run_manifest(source_paths(opt.data_root, opt.data_name, "train") + source_paths(opt.data_root, opt.data_name, "val"), repo_root=Path(__file__).parent)
+    opt.total_training_steps = max(1, opt.num_epochs * len(train_loader))
+    if opt.text_enc_type == "bert" and opt.bert_warmup_steps <= 0:
+        opt.bert_warmup_steps = max(1, round(opt.total_training_steps * 0.1))
     (Path(opt.checkpoint_dir) / "input_manifest.json").write_text(json.dumps(manifest, indent=2), encoding="utf-8")
     best_score, best_metrics, global_epoch = 0.0, {}, 0
     resume = None
     if opt.resume:
-        resume = torch.load(opt.resume, map_location="cpu")
+        resume = torch.load(opt.resume, map_location="cpu", weights_only=False)
     model = None
     move_gt = None
     for stage_index, stage_total in enumerate(totals):
@@ -150,9 +170,7 @@ def main() -> None:
             start_epoch, global_epoch = state.stage_epoch, state.global_epoch
             best_score, best_metrics = state.best_score, state.best_metrics
         for local_epoch in range(start_epoch, stage_total):
-            lr = opt.learning_rate * (0.1 ** (local_epoch // opt.lr_update))
-            for group in model.optimizer.param_groups:
-                group["lr"] = lr
+            set_learning_rates(opt, model, local_epoch)
             train_epoch(opt, train_loader, model, local_epoch, stage_index, global_epoch)
             metrics = validate(opt, val_loader, model)
             score = metrics["Rsum"]
@@ -169,8 +187,9 @@ def main() -> None:
             torch.save(checkpoint, Path(opt.checkpoint_dir) / "checkpoint.pth.tar")
             if score >= best_score:
                 torch.save(checkpoint, Path(opt.checkpoint_dir) / "model_best.pth.tar")
+            lrs = {str(group.get("group_name", index)): group["lr"] for index, group in enumerate(model.optimizer.param_groups)}
             logger.info(
-                "stage=%s epoch=%s global=%s R@1=%.2f MRR=%.2f Rsum=%.2f best=%.2f",
+                "stage=%s epoch=%s global=%s R@1=%.2f MRR=%.2f Rsum=%.2f best=%.2f lrs=%s",
                 stage_index,
                 local_epoch,
                 global_epoch,
@@ -178,6 +197,7 @@ def main() -> None:
                 metrics["MRR"],
                 score,
                 best_score,
+                lrs,
             )
             global_epoch += 1
         move_gt = model.move_gt
