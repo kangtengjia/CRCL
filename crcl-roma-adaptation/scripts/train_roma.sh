@@ -9,7 +9,11 @@ DATA_ROOT="${DATA_ROOT:-/home/ktj/Projects/Cross-Modality-Learning/RoMa/data}"
 VOCAB_PATH="${VOCAB_PATH:-/home/ktj/Projects/Cross-Modality-Learning/RoMa/vocab}"
 BERT_PATH="${BERT_PATH:-/home/ktj/Projects/RoMa/pretrained/bert-base-uncased}"
 RUN_FOLDER="${RUN_FOLDER:-roma/${DATASET}/${TEXT_ENCODER}}"
-RUN_ROOT="runs/${RUN_FOLDER}"
+if [[ -n "${OUTPUT_ROOT:-}" ]]; then
+  RUN_ROOT="${OUTPUT_ROOT}/${DATASET}/${TEXT_ENCODER}"
+else
+  RUN_ROOT="runs/${RUN_FOLDER}"
+fi
 EARLY_STOP_PATIENCE="${EARLY_STOP_PATIENCE:-10}"
 EARLY_STOP_LOG="${EARLY_STOP_LOG:-${RUN_ROOT}/early_stop_monitor.log}"
 EARLY_STOP_STATE="${EARLY_STOP_STATE:-${RUN_ROOT}/early_stop.json}"
@@ -48,7 +52,7 @@ TRAIN_COMMAND=(
   "${PYTHON_BIN}" train_roma.py
   --data_name "${DATASET}" --data_root "${DATA_ROOT}" --data_path "${DATA_ROOT}"
   --vocab_path "${VOCAB_PATH}" --text_enc_type "${TEXT_ENCODER}"
-  --folder_name "${RUN_FOLDER}" --module_name SGR --noise_ratio 0
+  --folder_name "${RUN_FOLDER}" --output_root "${RUN_ROOT}" --module_name SGR --noise_ratio 0
   --num_epochs "${NUM_EPOCHS:-$EPOCHS}" --learning_rate "${LEARNING_RATE:-$LR}"
   --lr_update "${LR_UPDATE_OVERRIDE:-$LR_UPDATE}" --batch_size "${BATCH_SIZE:-$BATCH}"
   --workers "${WORKERS:-8}" --img_dim 1024 --embed_size 1024 --num_regions 200 --gpu "${GPU_ID}"

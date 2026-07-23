@@ -26,6 +26,7 @@ def parse_opt():
     parser.add_argument('--seed', default=2022, type=int)
     parser.add_argument('--weights_only', action='store_true')
     parser.add_argument('--folder_name', default='', help='Folder name to save the running results')
+    parser.add_argument('--output_root', default='', help='Absolute per-run output directory; overrides the legacy runs/<folder_name> layout.')
     
     # ----------------------- training setting ----------------------#
     parser.add_argument('--batch_size', default=128, type=int,
@@ -117,8 +118,13 @@ def parse_opt():
 
     opt = parser.parse_args()
     project_path = str(sys.path[0])
-    opt.log_dir = f'{project_path}/runs/{opt.folder_name}/log_dir'
-    opt.checkpoint_dir = f'{project_path}/runs/{opt.folder_name}/checkpoint_dir'
+    if opt.output_root:
+        output_root = os.path.abspath(opt.output_root)
+        opt.log_dir = f'{output_root}/log_dir'
+        opt.checkpoint_dir = f'{output_root}/checkpoint_dir'
+    else:
+        opt.log_dir = f'{project_path}/runs/{opt.folder_name}/log_dir'
+        opt.checkpoint_dir = f'{project_path}/runs/{opt.folder_name}/checkpoint_dir'
  
     opt.schedules = [int(i) for i in opt.schedules.split(',')]
     if not os.path.isdir(opt.log_dir):

@@ -35,7 +35,10 @@ def canonical_dataset_name(name: str) -> str:
 
 
 def _split_tag(split: str) -> str:
-    return "train" if split == "train" else "val"
+    normalized = str(split).lower()
+    if normalized not in {"train", "val", "test"}:
+        raise ValueError(f"unsupported RoMa split: {split}")
+    return normalized
 
 
 def _json(path: Path) -> List[Dict[str, object]]:
@@ -94,9 +97,9 @@ def _rows(root: Path, dataset: str, split: str) -> tuple[List[str], List[str]]:
     raise ValueError(f"unsupported RoMa dataset: {dataset}")
 
 
-def _scanrefer_pool(root: Path) -> tuple[List[str], np.ndarray]:
+def _scanrefer_pool(root: Path, splits: Sequence[str]) -> tuple[List[str], np.ndarray]:
     ids, arrays = [], []
-    for split in ("train", "val"):
+    for split in splits:
         rows = _jsonl(root / f"scanrefer_{split}.jsonl")
         scene_ids = _ordered_unique([str(row["scene_id"]) for row in rows])
         features = np.load(root / f"pt2vec_200_random_{split}.npy")
@@ -109,9 +112,9 @@ def _scanrefer_pool(root: Path) -> tuple[List[str], np.ndarray]:
     return ids, np.concatenate(arrays, axis=0)
 
 
-def _scenedepict_pool(root: Path) -> tuple[List[str], np.ndarray]:
+def _scenedepict_pool(root: Path, splits: Sequence[str]) -> tuple[List[str], np.ndarray]:
     ids, arrays = [], []
-    for split in ("train", "val"):
+    for split in splits:
         rows = _json(root / f"3D_Text_Retrv_{split}_final_sorted.json")
         scene_ids = _ordered_unique([str(row["scene_id"]) for row in rows])
         features = np.load(root / f"3D_Text_Retrv_grid_{split}.npy")
@@ -129,8 +132,9 @@ def load_roma_bundle(data_root: str | Path, data_name: str, data_split: str) -> 
     captions, scene_ids = _rows(root, dataset, split)
     feature_scene_ids = _ordered_unique(scene_ids)
     if dataset == "nr3d":
-        scan_ids, scan_features = _scanrefer_pool(root)
-        depict_ids, depict_features = _scenedepict_pool(root)
+        pool_splits = ("test",) if split == "test" else ("train", "val")
+        scan_ids, scan_features = _scanrefer_pool(root, pool_splits)
+        depict_ids, depict_features = _scenedepict_pool(root, pool_splits)
         feature_by_scene = {scene_id: scan_features[index] for index, scene_id in enumerate(scan_ids)}
         for index, scene_id in enumerate(depict_ids):
             feature_by_scene.setdefault(scene_id, depict_features[index])
